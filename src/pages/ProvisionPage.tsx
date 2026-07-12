@@ -93,7 +93,7 @@ export function ProvisionPage() {
       <div className="flex items-center gap-2">
         <Sparkles size={16} className="text-accent" />
         <span className="font-mono text-[11px] uppercase tracking-wide text-ink-3">
-          CivicOS · provisioner
+          CIN · provisioner
         </span>
       </div>
       <h1 className="mt-2 font-display text-[28px] font-semibold tracking-tight text-ink">

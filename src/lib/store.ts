@@ -10,12 +10,12 @@ import type { Proposal } from "@/api/mock/proposals";
  */
 
 const KEYS = {
-  tenants: "civicos.tenants.v1", // provisioned tenants (seed tenants are code)
-  users: "civicos.users.v1", // demo users seeded for provisioned tenants
-  proposals: "civicos.proposals.v1", // starter proposals for provisioned tenants
-  votes: "civicos.votes.v1", // { [tenantId]: { [proposalId]: userId[] } }
-  session: "civicos.session.v1", // { tenantId, userId } | null
-  currentTenant: "civicos.currentTenant.v1",
+  tenants: "cin.tenants.v1", // provisioned tenants (seed tenants are code)
+  users: "cin.users.v1", // demo users seeded for provisioned tenants
+  proposals: "cin.proposals.v1", // starter proposals for provisioned tenants
+  votes: "cin.votes.v1", // { [tenantId]: { [proposalId]: userId[] } }
+  session: "cin.session.v1", // { tenantId, userId } | null
+  currentTenant: "cin.currentTenant.v1",
 };
 
 function read<T>(key: string, fallback: T): T {

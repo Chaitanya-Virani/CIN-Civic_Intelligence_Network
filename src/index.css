@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ *
- * CivicOS design tokens
+ * CIN design tokens
  * Neutrals are shared across all tenants (the quiet "OS chrome").
  * --primary / --accent are OWNED BY THE CURRENT TENANT and are set at
  * runtime by TenantContext, so switching a tenant re-themes everything.

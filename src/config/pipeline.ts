@@ -1,5 +1,5 @@
 /**
- * Every proposal moves through CivicOS's 4-stage trust pipeline. The stage is
+ * Every proposal moves through CIN's 4-stage trust pipeline. The stage is
  * part of the proposal record; the detail view renders it as an OS status strip
  * and the feed shows it as a compact chip.
  */

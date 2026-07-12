@@ -31,7 +31,7 @@ There is an existing working Vite + React app (`src/`, dev server on `:5174`). I
 
 We are porting it to **Next.js (App Router)** and building the tenant plane and one live vertical for real.
 
-**Rebrand while porting.** The old app is branded **CivicOS** throughout. The product is now **CIN — Civic Intelligence Network**. As you port each file, replace the string. The known places: the `<title>` (`"CivicOS — Campus Democracy OS"`), the wordmark in `components/system-bar.tsx`, the login copy (*"Sign in to Students' Union on CivicOS"*), the provisioner eyebrow (`CIVICOS · PROVISIONER` → `CIN · PROVISIONER`), the `civicos.session.v1` localStorage key (which is being deleted anyway), and the package name. Grep for `civicos` case-insensitively before you call a phase done — there will be more than you expect.
+**Rebrand while porting.** The old app is branded **CIN** throughout. The product is now **CIN — Civic Intelligence Network**. As you port each file, replace the string. The known places: the `<title>` (`"CIN — Campus Democracy OS"`), the wordmark in `components/system-bar.tsx`, the login copy (*"Sign in to Students' Union on CIN"*), the provisioner eyebrow (`CIN · PROVISIONER` → `CIN · PROVISIONER`), the `cin.session.v1` localStorage key (which is being deleted anyway), and the package name. Grep for `cin` case-insensitively before you call a phase done — there will be more than you expect.
 
 **Working method:** scaffold the Next app into a *sibling folder*, port into it, and keep the Vite app running on `:5174` the whole time so both the agent and I can look at it. Do not delete the Vite app until Next reaches parity.
 

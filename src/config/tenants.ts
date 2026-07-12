@@ -1,7 +1,7 @@
 import type { Sector } from "./modules";
 
 /**
- * A tenant is a config row. Everything about how CivicOS looks and which
+ * A tenant is a config row. Everything about how CIN looks and which
  * modules exist for a client is derived from this object at runtime.
  * The provisioner writes new tenants of exactly this shape into the store.
  */

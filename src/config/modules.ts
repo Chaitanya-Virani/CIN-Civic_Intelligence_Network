@@ -1,7 +1,7 @@
 /**
- * CivicOS feature-module catalog.
+ * CIN feature-module catalog.
  *
- * CivicOS is one codebase; each tenant enables a subset of these modules.
+ * CIN is one codebase; each tenant enables a subset of these modules.
  * `built: true` modules are fully implemented in this demo. The rest render
  * as selectable-but-"coming soon" in the provisioner, so the OS looks like a
  * real product surface with a roadmap — not just the five screens we shipped.

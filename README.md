@@ -1,4 +1,4 @@
-# CivicOS — Campus Democracy OS
+# CIN — Civic Intelligence Network
 
 One React codebase that themes and feature-scopes itself per client (university,
 panchayat, NGO) at runtime. Each tenant is a config row; flipping tenants

@@ -25,7 +25,7 @@ spec's own rule against hardcoding credentials.
   12 manifests, the `[module]` dispatcher with correct 404 semantics
   (unknown tenant, off-feature, capability-not-page all 404 correctly).
 - `POST /api/tenants` inserts a real row and persists across refresh.
-- Full rebrand — no leftover "CivicOS" strings anywhere.
+- Full rebrand — no leftover "CIN" strings anywhere.
 
 ## What was missing (confirmed by reading every file, not just names)
 

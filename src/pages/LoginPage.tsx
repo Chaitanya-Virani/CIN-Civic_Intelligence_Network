@@ -60,7 +60,7 @@ export function LoginPage() {
             {tenant.name}
           </h1>
           <p className="mt-1.5 text-[15px] text-ink-2">
-            Sign in to {tenant.kind} on CivicOS. Choose a demo account to
+            Sign in to {tenant.kind} on CIN. Choose a demo account to
             continue.
           </p>
         </div>

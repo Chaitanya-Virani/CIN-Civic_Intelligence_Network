@@ -1,4 +1,4 @@
-# Architecture Decision Record (ADR): CIN / CivicOS Platform
+# Architecture Decision Record (ADR): CIN / CIN Platform
 
 ## Core Architectural Decisions
 

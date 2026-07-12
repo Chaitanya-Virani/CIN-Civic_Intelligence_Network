@@ -1,0 +1,42 @@
+
+> cin@0.1.0 dev
+> next dev
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /run/media/chaitanya/New_Volume/Projects/CIN-Civic_Intelligence_Network/package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * /run/media/chaitanya/New_Volume/Projects/CIN-Civic_Intelligence_Network/cin/package-lock.json
+
+   ▲ Next.js 15.5.20
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.5:3000
+
+ ✓ Starting...
+ ✓ Ready in 2s
+ ✓ Compiled /middleware in 478ms (115 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 3s (626 modules)
+ GET / 200 in 3477ms
+ GET / 200 in 159ms
+ ○ Compiling /t/[tenant]/[module] ...
+ ✓ Compiled /t/[tenant]/[module] in 1009ms (736 modules)
+ GET /t/xaviers/proposals 200 in 1689ms
+ GET /t/xaviers/proposals 200 in 50ms
+ ✓ Compiled /api/t/[tenant]/proposals in 327ms (745 modules)
+ GET /api/t/xaviers/proposals 200 in 939ms
+ GET /api/t/xaviers/proposals 200 in 27ms
+ ○ Compiling /t/[tenant]/p/[id] ...
+ ✓ Compiled /t/[tenant]/p/[id] in 649ms (775 modules)
+ GET /t/xaviers/p/xa-p5 200 in 1213ms
+ ✓ Compiled /api/t/[tenant]/proposals/[id] in 294ms (777 modules)
+ GET /api/t/xaviers/proposals/xa-p5 200 in 753ms
+ GET /api/t/xaviers/proposals/xa-p5 200 in 24ms
+ ○ Compiling /api/t/[tenant]/proposals/[id]/vote ...
+ ✓ Compiled /api/t/[tenant]/proposals/[id]/vote in 631ms (786 modules)
+ POST /api/t/xaviers/proposals/xa-p5/vote 500 in 1183ms
+   Reload env: .env
+ ✓ Compiled in 3s (882 modules)
+ GET /t/xaviers/p/xa-p5 200 in 903ms
+[?25h

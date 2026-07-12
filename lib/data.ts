@@ -31,6 +31,8 @@ export interface Proposal {
   seedVotesByConstituency: Record<string, number>;
   budgetAsk?: number;
   tags: string[];
+  webexMessageId?: string;
+  webexRoomId?: string;
 }
 
 export interface ProposalView extends Proposal {
@@ -87,7 +89,7 @@ const SEED_USERS: User[] = [
 
 /* ----------------------------- seed proposals ---------------------------- */
 
-const SEED_PROPOSALS: Proposal[] = [
+let SEED_PROPOSALS: Proposal[] = [
   // ─── St. Xavier's College ───
   {
     id: "xa-p1",
@@ -323,6 +325,32 @@ export const proposals = {
       (x) => x.tenantSlug === tenantSlug && x.id === id,
     );
     return p ? enrich(p) : null;
+  },
+  async realVoteCount(tenantSlug: string, id: string): Promise<number> {
+    const p = SEED_PROPOSALS.find(
+      (x) => x.tenantSlug === tenantSlug && x.id === id,
+    );
+    return p ? seedTotal(p) : 0;
+  },
+  async create(data: Partial<Proposal>): Promise<ProposalView | null> {
+    const newProposal: Proposal = {
+      id: `p-${Math.random().toString(36).slice(2, 9)}`,
+      createdAt: new Date().toISOString(),
+      seedVotesByConstituency: {},
+      tags: [],
+      ...data,
+    } as Proposal;
+
+    SEED_PROPOSALS.push(newProposal);
+    return enrich(newProposal);
+  },
+  async attachWebexRoom(tenantSlug: string, id: string, roomId: string): Promise<void> {
+    const p = SEED_PROPOSALS.find(
+      (x) => x.tenantSlug === tenantSlug && x.id === id,
+    );
+    if (p) {
+      p.webexRoomId = roomId;
+    }
   },
 };
 

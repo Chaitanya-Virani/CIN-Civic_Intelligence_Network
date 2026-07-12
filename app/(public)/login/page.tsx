@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Lock, Loader2, ArrowRight } from "lucide-react";
 import { useSession } from "@/context/SessionContext";
 import { auth } from "@/lib/api";
-import { getTenant } from "@/lib/tenant";
+import { verifyTenantAction } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
@@ -26,7 +26,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const tenant = await getTenant(tenantSlug);
+      const tenant = await verifyTenantAction(tenantSlug);
       if (!tenant) {
         setError("Tenant not found.");
         setLoading(false);

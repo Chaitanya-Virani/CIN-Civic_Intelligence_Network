@@ -23,6 +23,7 @@ export interface Tenant {
   constituencyLabel: string;
   features: string[];
   branding: TenantBranding;
+  voteThreshold?: number;
 }
 
 const SEED_TENANTS: Tenant[] = [
@@ -85,6 +86,32 @@ export async function getTenant(slug: string): Promise<Tenant | null> {
     }
   }
   return SEED_TENANTS.find((t) => t.slug === slug) ?? null;
+}
+
+export async function getTenantByWebexRoom(roomId: string): Promise<Tenant | null> {
+  const sql = getDb();
+  if (sql) {
+    try {
+      const [row] = await sql`SELECT * FROM tenants WHERE webex_room_id = ${roomId}`;
+      if (row) {
+        return {
+          slug: row.slug,
+          name: row.name,
+          sector: row.sector,
+          bodyType: row.body_type,
+          constituencyLabel: row.constituency_label,
+          features: row.features || [],
+          branding: row.branding || {},
+        };
+      }
+    } catch (err) {
+      console.error("getTenantByWebexRoom DB query error:", err);
+    }
+  }
+  // Fallback for demo: map a specific room ID to a seed tenant
+  if (roomId === "room-xaviers") return SEED_TENANTS[0];
+  if (roomId === "room-devgaon") return SEED_TENANTS[1];
+  return null;
 }
 
 export async function listTenants(): Promise<Tenant[]> {

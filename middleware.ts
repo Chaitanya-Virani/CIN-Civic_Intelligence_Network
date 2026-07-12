@@ -13,6 +13,13 @@ export function middleware(req: NextRequest) {
     !["www", "cin", "vercel"].includes(sub) &&
     host.split(".").length > 2;
 
+  // IMPORTANT: Allow root page and explicit paths like /login, /signup, /provision
+  // to be accessed without a tenant context.
+  const path = req.nextUrl.pathname;
+  if (path === "/" || path.startsWith("/login") || path.startsWith("/signup") || path.startsWith("/provision")) {
+    return NextResponse.next();
+  }
+
   if (isSubdomainTenant && !req.nextUrl.pathname.startsWith("/t/")) {
     return NextResponse.rewrite(
       new URL(`/t/${sub}${req.nextUrl.pathname}`, req.url),

@@ -2,6 +2,8 @@ import { redirect, notFound } from "next/navigation";
 import { getTenant } from "@/lib/tenant";
 import { PAGE_MODULES } from "@/modules/registry";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * /t/[tenant] → redirect to the first enabled page-module.
  * E.g. /t/xaviers → /t/xaviers/proposals

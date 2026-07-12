@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowRight, Shield, Activity, Users, Layers, CheckCircle2 } from "lucide-react";
 import { listTenants } from "@/lib/tenant";
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const tenants = await listTenants();
 

@@ -23,8 +23,6 @@ export interface Tenant {
   constituencyLabel: string;
   features: string[];
   branding: TenantBranding;
-  /** Per-tenant override of WEBEX_VOTE_THRESHOLD. Null/undefined = use the env default. */
-  voteThreshold?: number | null;
 }
 
 const SEED_TENANTS: Tenant[] = [
@@ -80,7 +78,6 @@ export async function getTenant(slug: string): Promise<Tenant | null> {
           constituencyLabel: row.constituency_label,
           features: row.features || [],
           branding: row.branding || {},
-          voteThreshold: row.vote_threshold ?? null,
         };
       }
     } catch (err) {
@@ -104,7 +101,6 @@ export async function listTenants(): Promise<Tenant[]> {
           constituencyLabel: row.constituency_label,
           features: row.features || [],
           branding: row.branding || {},
-          voteThreshold: row.vote_threshold ?? null,
         }));
       }
     } catch (err) {
@@ -112,30 +108,4 @@ export async function listTenants(): Promise<Tenant[]> {
     }
   }
   return SEED_TENANTS;
-}
-
-/**
- * Resolve which tenant an inbound Webex event belongs to. This is the
- * multi-tenancy proof point at the integration layer: one bot, every
- * tenant, and `roomId` is the only thing that tells them apart.
- */
-export async function getTenantByWebexRoom(roomId: string): Promise<Tenant | null> {
-  const sql = getDb();
-  if (!sql) return null;
-  try {
-    const [row] = await sql`SELECT * FROM tenants WHERE webex_room_id = ${roomId}`;
-    if (!row) return null;
-    return {
-      slug: row.slug,
-      name: row.name,
-      sector: row.sector,
-      bodyType: row.body_type,
-      constituencyLabel: row.constituency_label,
-      features: row.features || [],
-      branding: row.branding || {},
-    };
-  } catch (err) {
-    console.error("getTenantByWebexRoom DB query error:", err);
-    return null;
-  }
 }

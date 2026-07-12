@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Users, Video, Wallet } from "lucide-react";
+import { ArrowUpRight, Users, Wallet } from "lucide-react";
 import type { ProposalView } from "@/lib/data";
 import type { Tenant } from "@/lib/tenant";
 import { useLang } from "@/context/LanguageContext";
@@ -19,18 +19,7 @@ export function ProposalCard({ p, tenant }: { p: ProposalView; tenant: Tenant })
       className="group flex flex-col rounded-[calc(var(--radius-app)+2px)] border border-line bg-surface p-5 transition-all hover:border-line-strong hover:shadow-[0_1px_0_var(--line),0_8px_24px_-16px_rgba(20,22,29,0.25)]"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <StageChip stage={p.stage} />
-          {p.webexRoomId && (
-            <span
-              className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary-soft px-2 py-1 text-[11px] font-medium text-primary-strong"
-              title="A Webex room was created for this proposal"
-            >
-              <Video size={11} />
-              Webex
-            </span>
-          )}
-        </div>
+        <StageChip stage={p.stage} />
         <ArrowUpRight
           size={16}
           className="mt-0.5 shrink-0 text-ink-3 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary"

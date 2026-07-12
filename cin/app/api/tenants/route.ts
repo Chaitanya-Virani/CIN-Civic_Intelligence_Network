@@ -17,8 +17,6 @@ export async function GET() {
       constituencyLabel: row.constituency_label,
       features: row.features || [],
       branding: row.branding || {},
-      webexRoomId: row.webex_room_id ?? null,
-      voteThreshold: row.vote_threshold ?? null,
     }));
     return NextResponse.json({ tenants });
   } catch (err: any) {
@@ -29,7 +27,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { name, slug, sector, bodyType, constituencyLabel, features, branding, webexRoomId, voteThreshold } = body;
+  const { name, slug, sector, bodyType, constituencyLabel, features, branding } = body;
 
   if (!name || !slug || !sector || !bodyType || !constituencyLabel) {
     return NextResponse.json(
@@ -56,7 +54,7 @@ export async function POST(req: NextRequest) {
   try {
     const [inserted] = await sql`
       INSERT INTO tenants (
-        slug, name, sector, body_type, constituency_label, features, branding, webex_room_id, vote_threshold
+        slug, name, sector, body_type, constituency_label, features, branding
       )
       VALUES (
         ${cleanSlug},
@@ -65,9 +63,7 @@ export async function POST(req: NextRequest) {
         ${bodyType},
         ${constituencyLabel},
         ${features || []},
-        ${JSON.stringify(branding || {})}::jsonb,
-        ${webexRoomId || null},
-        ${Number.isFinite(voteThreshold) ? voteThreshold : null}
+        ${JSON.stringify(branding || {})}::jsonb
       )
       RETURNING *
     `;
@@ -80,8 +76,6 @@ export async function POST(req: NextRequest) {
       constituencyLabel: inserted.constituency_label,
       features: inserted.features || [],
       branding: inserted.branding || {},
-      webexRoomId: inserted.webex_room_id ?? null,
-      voteThreshold: inserted.vote_threshold ?? null,
     };
 
     return NextResponse.json({ tenant: formatted }, { status: 201 });

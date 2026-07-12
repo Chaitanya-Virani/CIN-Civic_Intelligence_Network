@@ -67,25 +67,13 @@ ALTER TABLE proposals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE votes ENABLE ROW LEVEL SECURITY;
 
 -- Anon read policy scoped by tenant
--- Postgres has no `CREATE POLICY IF NOT EXISTS` (unlike the CREATE TABLE /
--- CREATE INDEX statements above), so re-running this migration against a
--- database that already has these policies fails with "already exists".
--- DROP + CREATE makes it safe to run more than once.
-DROP POLICY IF EXISTS anon_read_tenants ON tenants;
 CREATE POLICY anon_read_tenants ON tenants FOR SELECT USING (true);
-DROP POLICY IF EXISTS anon_read_users ON users;
 CREATE POLICY anon_read_users ON users FOR SELECT USING (true);
-DROP POLICY IF EXISTS anon_read_proposals ON proposals;
 CREATE POLICY anon_read_proposals ON proposals FOR SELECT USING (true);
-DROP POLICY IF EXISTS anon_read_votes ON votes;
 CREATE POLICY anon_read_votes ON votes FOR SELECT USING (true);
 
 -- Writes go through service-role only (or authenticated MFA backend)
-DROP POLICY IF EXISTS service_role_all_tenants ON tenants;
 CREATE POLICY service_role_all_tenants ON tenants TO service_role USING (true) WITH CHECK (true);
-DROP POLICY IF EXISTS service_role_all_users ON users;
 CREATE POLICY service_role_all_users ON users TO service_role USING (true) WITH CHECK (true);
-DROP POLICY IF EXISTS service_role_all_proposals ON proposals;
 CREATE POLICY service_role_all_proposals ON proposals TO service_role USING (true) WITH CHECK (true);
-DROP POLICY IF EXISTS service_role_all_votes ON votes;
 CREATE POLICY service_role_all_votes ON votes TO service_role USING (true) WITH CHECK (true);

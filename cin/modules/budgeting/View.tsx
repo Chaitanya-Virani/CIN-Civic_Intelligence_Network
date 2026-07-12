@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Wallet } from "lucide-react";
-import type { ProposalView } from "@/lib/data";
+import { proposals, type ProposalView } from "@/lib/data";
 import { formatINR } from "@/lib/utils";
 import type { Tenant } from "@/lib/tenant";
 
@@ -14,9 +14,7 @@ export function BudgetingView({ tenant }: { tenant: Tenant }) {
   const [items, setItems] = useState<ProposalView[] | null>(null);
 
   useEffect(() => {
-    fetch(`/api/t/${tenant.slug}/proposals`)
-      .then((r) => r.json())
-      .then(setItems);
+    proposals.list(tenant.slug).then(setItems);
   }, [tenant.slug]);
 
   const withBudget = useMemo(

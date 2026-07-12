@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { useLang } from "@/context/LanguageContext";
-import type { ProposalView } from "@/lib/data";
+import { proposals, type ProposalView } from "@/lib/data";
 import { PIPELINE, type StageId } from "@/lib/pipeline";
 import { ProposalCard } from "@/components/proposal-card";
 import { Input } from "@/components/ui/field";
@@ -23,9 +23,7 @@ export function ProposalsView({ tenant }: { tenant: Tenant }) {
 
   useEffect(() => {
     setItems(null);
-    fetch(`/api/t/${tenant.slug}/proposals`)
-      .then((r) => r.json())
-      .then(setItems);
+    proposals.list(tenant.slug).then(setItems);
   }, [tenant.slug]);
 
   const filtered = useMemo(() => {

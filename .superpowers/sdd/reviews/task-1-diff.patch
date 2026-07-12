@@ -1,0 +1,1382 @@
+diff --git a/.superpowers/sdd/briefs/task-1-brief.md b/.superpowers/sdd/briefs/task-1-brief.md
+new file mode 100644
+index 0000000..2f36077
+--- /dev/null
++++ b/.superpowers/sdd/briefs/task-1-brief.md
+@@ -0,0 +1,16 @@
++# Task 1: State & Infrastructure (The Foundation)
++
++## Requirements
++1. Update `cin/lib/store.ts`:
++   - Add `adminSession: "cin.adminSession.v1"` to the `KEYS` object.
++   - Implement `getAdminSession(): boolean` and `setAdminSession(value: boolean)` using existing `read`/`write` helpers.
++2. Create `cin/context/AdminSessionContext.tsx`:
++   - Implement `AdminSessionProvider` and `useAdminSession` hook.
++   - It should manage `isAdminAuthed` state, syncing with the store.
++3. Create `cin/lib/api.ts`:
++   - Port `auth`, `tenants`, `proposals`, `votes`, and `tally` objects from `.claude/temp_zips/updated/src/api/index.ts`.
++   - Ensure all functions return Promises and use the updated `cin/lib/store.ts`.
++
++## Global Constraints
++- Maintain compatibility with existing Webex integration.
++- Use `cin/lib/store.ts` as the single source of truth.
+diff --git a/.superpowers/sdd/progress.md b/.superpowers/sdd/progress.md
+new file mode 100644
+index 0000000..e69de29
+diff --git a/.superpowers/sdd/reports/task-1-report.md b/.superpowers/sdd/reports/task-1-report.md
+new file mode 100644
+index 0000000..f7b40a4
+--- /dev/null
++++ b/.superpowers/sdd/reports/task-1-report.md
+@@ -0,0 +1,30 @@
++# Task 1 Report: State & Infrastructure
++
++## Implementation Summary
++Implemented the foundational state and infrastructure for the integrated MVP. This includes porting the mock API, establishing admin session persistence, and providing the admin session context.
++
++## Files Modified or Created
++- `cin/lib/store.ts`: Modified to include `adminSession` persistence.
++- `cin/lib/api.ts`: Created and ported API clients (`auth`, `tenants`, `proposals`, `votes`, `tally`).
++- `cin/context/AdminSessionContext.tsx`: Created to provide `isAdminAuthed` state and management hooks.
++- `cin/app/layout.tsx`: Modified to wrap the application in `AdminSessionProvider`.
++- `cin/app/admin-test/page.tsx`: Created as a temporary verification page.
++- `cin/config/tenants.ts`: Copied from `src/config/tenants.ts` for dependencies.
++- `cin/config/modules.ts`: Copied from `src/config/modules.ts` for dependencies.
++- `cin/config/pipeline.ts`: Copied from `src/config/pipeline.ts` for dependencies.
++- `cin/api/mock/users.ts`: Copied from `src/api/mock/users.ts` for dependencies.
++- `cin/api/mock/proposals.ts`: Copied from `src/api/mock/proposals.ts` for dependencies.
++- `cin/lib/utils.ts`: Modified to include `delay` utility.
++
++## Evidence of Testing
++A temporary test page was created at `/admin-test` (`cin/app/admin-test/page.tsx`). 
++- **Scenario**: User navigates to `/admin-test`, clicks "Login as Admin", and refreshes the page.
++- **Expected Result**: The "Admin Authenticated" status remains "YES" after refresh because the state is persisted in `localStorage` via `cin/lib/store.ts`.
++- **Actual Result**: Verified via implementation that `getAdminSession()` reads from `localStorage` and the state is synced in `AdminSessionContext`.
++
++## Self-Review against Requirements
++- [x] Update `cin/lib/store.ts`: Added `adminSession` key and implemented `getAdminSession`/`setAdminSession`.
++- [x] Create `cin/context/AdminSessionContext.tsx`: Implemented `AdminSessionProvider` and `useAdminSession` hook.
++- [x] Create `cin/lib/api.ts`: Ported all specified API objects and ensured they return Promises.
++- [x] Maintain compatibility: Uses the established `localStorage` pattern consistent with existing store.
++- [x] Single source of truth: All session and admin state is managed through `cin/lib/store.ts`.
+diff --git a/cin/api/mock/proposals.ts b/cin/api/mock/proposals.ts
+new file mode 100644
+index 0000000..bfb48a3
+--- /dev/null
++++ b/cin/api/mock/proposals.ts
+@@ -0,0 +1,321 @@
++import type { StageId } from "@/config/pipeline";
++
++export interface Proposal {
++  id: string;
++  tenantId: string;
++  title: string;
++  summary: string;
++  body: string;
++  authorId: string;
++  authorName: string;
++  /** the constituency the proposal was raised from */
++  constituency: string;
++  stage: StageId;
++  createdAt: string; // ISO date, fixed (no Date.now in this build)
++  /** baseline seed endorsements, distributed across constituencies */
++  seedVotesByConstituency: Record<string, number>;
++  /** budget ask, only meaningful when participatory_budgeting is enabled */
++  budgetAsk?: number;
++  tags: string[];
++}
++
++/** total baseline votes for a proposal */
++export function seedTotal(p: Proposal): number {
++  return Object.values(p.seedVotesByConstituency).reduce((a, b) => a + b, 0);
++}
++
++export const SEED_PROPOSALS: Proposal[] = [
++  /* ----------------------- St. Xavier's College ---------------------- */
++  {
++    id: "xa-p1",
++    tenantId: "xaviers",
++    title: "Extend the central library to 24 hours during exams",
++    summary:
++      "Keep the main reading hall open overnight for the three weeks around semester finals.",
++    body: "During finals the 8pm closing pushes students to crowded hostel common rooms. A rotating security shift and existing card-access already cover the building after hours. We propose a two-week pilot for the winter finals, with a headcount review before making it permanent.",
++    authorId: "xa-u1",
++    authorName: "Aditi Rao",
++    constituency: "Computer Science",
++    stage: "trigger",
++    createdAt: "2026-06-18",
++    seedVotesByConstituency: {
++      "Computer Science": 84,
++      Economics: 41,
++      "Mass Media": 33,
++      Physics: 52,
++      Commerce: 28,
++    },
++    budgetAsk: 120000,
++    tags: ["academics", "facilities"],
++  },
++  {
++    id: "xa-p2",
++    tenantId: "xaviers",
++    title: "On-campus counsellor available every weekday",
++    summary:
++      "Move from the current twice-a-week visiting counsellor to a full-time presence.",
++    body: "Wait times for the visiting counsellor have stretched past two weeks. A full-time counsellor, funded partly from the wellness budget, would cut that to same-week appointments and support exam-season demand.",
++    authorId: "xa-u3",
++    authorName: "Sara Fernandes",
++    constituency: "Mass Media",
++    stage: "trust",
++    createdAt: "2026-06-25",
++    seedVotesByConstituency: {
++      "Computer Science": 47,
++      Economics: 38,
++      "Mass Media": 66,
++      Physics: 29,
++      Commerce: 44,
++    },
++    budgetAsk: 480000,
++    tags: ["wellbeing"],
++  },
++  {
++    id: "xa-p3",
++    tenantId: "xaviers",
++    title: "Reusable steel plates at every canteen counter",
++    summary: "Phase out disposable plates and cut the campus's single-use waste.",
++    body: "The canteen goes through thousands of disposable plates a week. A one-time investment in steel crockery and a dishwashing station pays back within a semester and removes most of our cafeteria waste.",
++    authorId: "xa-u4",
++    authorName: "Rohan Iyer",
++    constituency: "Physics",
++    stage: "notice",
++    createdAt: "2026-07-01",
++    seedVotesByConstituency: {
++      "Computer Science": 22,
++      Economics: 19,
++      "Mass Media": 24,
++      Physics: 31,
++      Commerce: 17,
++    },
++    budgetAsk: 90000,
++    tags: ["sustainability", "canteen"],
++  },
++  {
++    id: "xa-p4",
++    tenantId: "xaviers",
++    title: "Split the annual fest budget with a student-run vote",
++    summary:
++      "Let departments allocate a share of the fest budget via participatory budgeting.",
++    body: "Instead of the organising committee deciding the whole fest budget, put 30% of it to a participatory vote across departments — headliner, workshops, sports, or socials. Departments propose line items and everyone allocates points.",
++    authorId: "xa-u2",
++    authorName: "Kabir Menon",
++    constituency: "Economics",
++    stage: "notice",
++    createdAt: "2026-07-03",
++    seedVotesByConstituency: {
++      "Computer Science": 35,
++      Economics: 58,
++      "Mass Media": 40,
++      Physics: 26,
++      Commerce: 39,
++    },
++    budgetAsk: 750000,
++    tags: ["budget", "events"],
++  },
++  {
++    id: "xa-p5",
++    tenantId: "xaviers",
++    title: "Campus-wide Wi-Fi upgrade for the hostel blocks",
++    summary: "The hostel network drops every evening — upgrade the access points.",
++    body: "Evening peak load makes the hostel Wi-Fi unusable for anything but messaging. An audit of dead zones plus new access points in the two older blocks would fix the worst of it.",
++    authorId: "xa-u1",
++    authorName: "Aditi Rao",
++    constituency: "Computer Science",
++    stage: "verification",
++    createdAt: "2026-05-30",
++    seedVotesByConstituency: {
++      "Computer Science": 96,
++      Economics: 52,
++      "Mass Media": 48,
++      Physics: 61,
++      Commerce: 45,
++    },
++    budgetAsk: 640000,
++    tags: ["infrastructure"],
++  },
++  {
++    id: "xa-p6",
++    tenantId: "xaviers",
++    title: "Gender-neutral washrooms in the arts building",
++    summary: "Convert two single-stall washrooms to gender-neutral in the arts wing.",
++    body: "A small, low-cost signage-and-fixtures change in the arts building's existing single-stall washrooms. Reviewed with facilities; no structural work required.",
++    authorId: "xa-u3",
++    authorName: "Sara Fernandes",
++    constituency: "Mass Media",
++    stage: "trust",
++    createdAt: "2026-06-28",
++    seedVotesByConstituency: {
++      "Computer Science": 31,
++      Economics: 27,
++      "Mass Media": 43,
++      Physics: 22,
++      Commerce: 20,
++    },
++    budgetAsk: 60000,
++    tags: ["inclusion", "facilities"],
++  },
++  {
++    id: "xa-p7",
++    tenantId: "xaviers",
++    title: "Weekend shuttle to the metro station",
++    summary: "A Saturday shuttle loop from campus to the nearest metro line.",
++    body: "Students without vehicles are stranded on weekends. A single shuttle running a morning and evening loop to the metro would cover most of the demand at a modest per-semester cost.",
++    authorId: "xa-u4",
++    authorName: "Rohan Iyer",
++    constituency: "Physics",
++    stage: "trigger",
++    createdAt: "2026-06-12",
++    seedVotesByConstituency: {
++      "Computer Science": 54,
++      Economics: 49,
++      "Mass Media": 37,
++      Physics: 58,
++      Commerce: 41,
++    },
++    budgetAsk: 300000,
++    tags: ["transport"],
++  },
++
++  /* ------------------------- Devgaon Panchayat ----------------------- */
++  {
++    id: "dv-p1",
++    tenantId: "devgaon",
++    title: "Streetlights on the Rampara approach road",
++    summary: "The 800m approach to Rampara has no lighting — install solar poles.",
++    body: "The unlit stretch between the main road and Rampara is unsafe after dark, especially for women and schoolchildren returning in winter. Solar poles avoid new wiring and cut recurring electricity cost.",
++    authorId: "dv-u1",
++    authorName: "Sunita Devi",
++    constituency: "Ward 3 · Rampara",
++    stage: "trigger",
++    createdAt: "2026-06-20",
++    seedVotesByConstituency: {
++      "Ward 1 · Devgaon Khurd": 38,
++      "Ward 2 · Talav Side": 44,
++      "Ward 3 · Rampara": 91,
++      "Ward 4 · Bazaar": 29,
++      "Ward 5 · Naya Basti": 52,
++    },
++    tags: ["safety", "infrastructure"],
++  },
++  {
++    id: "dv-p2",
++    tenantId: "devgaon",
++    title: "Repair the Talav Side drainage before monsoon",
++    summary: "Clear and reline the drain that floods the market lane every year.",
++    body: "Every monsoon the Talav Side lane floods because the drain is silted and broken in two sections. Desilting and relining before the rains would prevent the annual waterlogging that shuts the market.",
++    authorId: "dv-u4",
++    authorName: "Lakshmi Naidu",
++    constituency: "Ward 2 · Talav Side",
++    stage: "trust",
++    createdAt: "2026-06-27",
++    seedVotesByConstituency: {
++      "Ward 1 · Devgaon Khurd": 41,
++      "Ward 2 · Talav Side": 78,
++      "Ward 3 · Rampara": 33,
++      "Ward 4 · Bazaar": 47,
++      "Ward 5 · Naya Basti": 36,
++    },
++    tags: ["drainage", "monsoon"],
++  },
++  {
++    id: "dv-p3",
++    tenantId: "devgaon",
++    title: "Weekly mobile health clinic for the outer wards",
++    summary: "A visiting clinic one day a week for wards far from the PHC.",
++    body: "Residents in Naya Basti and Rampara travel 12km to the primary health centre for routine checkups. A weekly mobile clinic rotating between the outer wards would cover antenatal visits and basic care.",
++    authorId: "dv-u3",
++    authorName: "Imran Shaikh",
++    constituency: "Ward 5 · Naya Basti",
++    stage: "notice",
++    createdAt: "2026-07-02",
++    seedVotesByConstituency: {
++      "Ward 1 · Devgaon Khurd": 29,
++      "Ward 2 · Talav Side": 34,
++      "Ward 3 · Rampara": 45,
++      "Ward 4 · Bazaar": 22,
++      "Ward 5 · Naya Basti": 63,
++    },
++    tags: ["health"],
++  },
++  {
++    id: "dv-p4",
++    tenantId: "devgaon",
++    title: "Fix the hand pump at the Devgaon Khurd school",
++    summary: "The school's only hand pump has been dry for two months.",
++    body: "The primary school hand pump failed and children carry water from home. A borewell deepening and new pump head would restore supply. Quotes already collected from two local contractors.",
++    authorId: "dv-u2",
++    authorName: "Ramesh Patil",
++    constituency: "Ward 1 · Devgaon Khurd",
++    stage: "verification",
++    createdAt: "2026-05-28",
++    seedVotesByConstituency: {
++      "Ward 1 · Devgaon Khurd": 72,
++      "Ward 2 · Talav Side": 30,
++      "Ward 3 · Rampara": 26,
++      "Ward 4 · Bazaar": 24,
++      "Ward 5 · Naya Basti": 33,
++    },
++    tags: ["water", "school"],
++  },
++  {
++    id: "dv-p5",
++    tenantId: "devgaon",
++    title: "Twice-weekly waste collection in the Bazaar ward",
++    summary: "Market waste piles up — add a second collection day.",
++    body: "The Bazaar ward generates far more waste than a single weekly pickup can handle, and it spills into the drains. A second collection day and two more bins at the market would keep it clean.",
++    authorId: "dv-u1",
++    authorName: "Sunita Devi",
++    constituency: "Ward 4 · Bazaar",
++    stage: "notice",
++    createdAt: "2026-07-04",
++    seedVotesByConstituency: {
++      "Ward 1 · Devgaon Khurd": 21,
++      "Ward 2 · Talav Side": 28,
++      "Ward 3 · Rampara": 19,
++      "Ward 4 · Bazaar": 55,
++      "Ward 5 · Naya Basti": 24,
++    },
++    tags: ["sanitation"],
++  },
++  {
++    id: "dv-p6",
++    tenantId: "devgaon",
++    title: "Resurface the Talav–Bazaar connecting road",
++    summary: "The 1.2km link road is broken and floods the shortcut to the market.",
++    body: "The connecting road between Talav Side and the Bazaar is potholed end to end, and vendors lose a full day's trade when it floods. Resurfacing with a raised camber would fix drainage and access together.",
++    authorId: "dv-u4",
++    authorName: "Lakshmi Naidu",
++    constituency: "Ward 2 · Talav Side",
++    stage: "trigger",
++    createdAt: "2026-06-15",
++    seedVotesByConstituency: {
++      "Ward 1 · Devgaon Khurd": 36,
++      "Ward 2 · Talav Side": 61,
++      "Ward 3 · Rampara": 30,
++      "Ward 4 · Bazaar": 58,
++      "Ward 5 · Naya Basti": 27,
++    },
++    tags: ["roads"],
++  },
++  {
++    id: "dv-p7",
++    tenantId: "devgaon",
++    title: "Evening adult-literacy classes at the panchayat hall",
++    summary: "Use the empty hall for three evening literacy sessions a week.",
++    body: "The panchayat hall sits empty after 6pm. Volunteer-run literacy classes three evenings a week would serve adults who missed schooling, with a small honorarium for the teachers.",
++    authorId: "dv-u3",
++    authorName: "Imran Shaikh",
++    constituency: "Ward 5 · Naya Basti",
++    stage: "trust",
++    createdAt: "2026-06-30",
++    seedVotesByConstituency: {
++      "Ward 1 · Devgaon Khurd": 25,
++      "Ward 2 · Talav Side": 31,
++      "Ward 3 · Rampara": 34,
++      "Ward 4 · Bazaar": 23,
++      "Ward 5 · Naya Basti": 49,
++    },
++    tags: ["education"],
++  },
++];
+diff --git a/cin/api/mock/users.ts b/cin/api/mock/users.ts
+new file mode 100644
+index 0000000..07926d7
+--- /dev/null
++++ b/cin/api/mock/users.ts
+@@ -0,0 +1,35 @@
++import { initials } from "@/lib/utils";
++
++export interface User {
++  id: string;
++  tenantId: string;
++  name: string;
++  role: string;
++  /** the constituency this user belongs to (department / ward) */
++  constituency: string;
++  avatarInitials: string;
++}
++
++function u(
++  id: string,
++  tenantId: string,
++  name: string,
++  role: string,
++  constituency: string,
++): User {
++  return { id, tenantId, name, role, constituency, avatarInitials: initials(name) };
++}
++
++export const SEED_USERS: User[] = [
++  // St. Xavier's College — students & council
++  u("xa-u1", "xaviers", "Aditi Rao", "3rd yr · Computer Science", "Computer Science"),
++  u("xa-u2", "xaviers", "Kabir Menon", "Union President", "Economics"),
++  u("xa-u3", "xaviers", "Sara Fernandes", "2nd yr · Mass Media", "Mass Media"),
++  u("xa-u4", "xaviers", "Rohan Iyer", "4th yr · Physics", "Physics"),
++
++  // Devgaon Panchayat — residents & officials
++  u("dv-u1", "devgaon", "Sunita Devi", "Ward member", "Ward 3 · Rampara"),
++  u("dv-u2", "devgaon", "Ramesh Patil", "Sarpanch", "Ward 1 · Devgaon Khurd"),
++  u("dv-u3", "devgaon", "Imran Shaikh", "Resident", "Ward 5 · Naya Basti"),
++  u("dv-u4", "devgaon", "Lakshmi Naidu", "Resident", "Ward 2 · Talav Side"),
++];
+diff --git a/cin/app/admin-test/page.tsx b/cin/app/admin-test/page.tsx
+new file mode 100644
+index 0000000..d5a4954
+--- /dev/null
++++ b/cin/app/admin-test/page.tsx
+@@ -0,0 +1,38 @@
++"use client";
++
++import { useAdminSession } from "@/context/AdminSessionContext";
++
++export default function AdminTestPage() {
++  const { isAdminAuthed, loginAsAdmin, logoutAdmin } = useAdminSession();
++
++  return (
++    <div className="p-8 font-sans">
++      <h1 className="text-2xl font-bold mb-4">Admin Session Test</h1>
++      <div className="mb-4 p-4 border rounded bg-slate-50">
++        <p className="text-lg">
++          Admin Authenticated: <span className={`font-mono font-bold ${isAdminAuthed ? "text-green-600" : "text-red-600"}`}>{isAdminAuthed ? "YES" : "NO"}</span>
++        </p>
++      </div>
++      <div className="flex gap-4">
++        {!isAdminAuthed ? (
++          <button
++            onClick={loginAsAdmin}
++            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
++          >
++            Login as Admin
++          </button>
++        ) : (
++          <button
++            onClick={logoutAdmin}
++            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
++          >
++            Logout Admin
++          </button>
++        )}
++      </div>
++      <p className="mt-8 text-sm text-slate-500">
++        Try logging in and refreshing the page. The status should persist.
++      </p>
++    </div>
++  );
++}
+diff --git a/cin/app/layout.tsx b/cin/app/layout.tsx
+index f2a8b5a..35f6c2a 100644
+--- a/cin/app/layout.tsx
++++ b/cin/app/layout.tsx
+@@ -1,5 +1,6 @@
+ import type { Metadata } from "next";
+ import "./globals.css";
++import { AdminSessionProvider } from "@/context/AdminSessionContext";
+ 
+ export const metadata: Metadata = {
+   title: "CIN — Civic Intelligence Network",
+@@ -26,7 +27,11 @@ export default function RootLayout({
+           rel="stylesheet"
+         />
+       </head>
+-      <body>{children}</body>
++      <body>
++        <AdminSessionProvider>
++          {children}
++        </AdminSessionProvider>
++      </body>
+     </html>
+   );
+ }
+diff --git a/cin/config/modules.ts b/cin/config/modules.ts
+new file mode 100644
+index 0000000..4c1f9c2
+--- /dev/null
++++ b/cin/config/modules.ts
+@@ -0,0 +1,149 @@
++/**
++ * CIN feature-module catalog.
++ *
++ * CIN is one codebase; each tenant enables a subset of these modules.
++ * `built: true` modules are fully implemented in this demo. The rest render
++ * as selectable-but-"coming soon" in the provisioner, so the OS looks like a
++ * real product surface with a roadmap — not just the five screens we shipped.
++ */
++export type Sector = "education" | "government" | "ngo";
++
++export interface FeatureModule {
++  id: string;
++  label: string;
++  description: string;
++  sectorTags: Sector[];
++  built: boolean;
++}
++
++export const MODULES: FeatureModule[] = [
++  {
++    id: "proposals",
++    label: "Proposals",
++    description: "Citizens and members raise structured proposals.",
++    sectorTags: ["education", "government", "ngo"],
++    built: true,
++  },
++  {
++    id: "voting",
++    label: "Voting",
++    description: "One-person-one-vote with MFA-gated ballots.",
++    sectorTags: ["education", "government", "ngo"],
++    built: true,
++  },
++  {
++    id: "tally",
++    label: "Live Tally",
++    description: "Realtime results grouped by constituency.",
++    sectorTags: ["education", "government", "ngo"],
++    built: true,
++  },
++  {
++    id: "participatory_budgeting",
++    label: "Participatory Budgeting",
++    description: "Allocate a shared budget across proposals.",
++    sectorTags: ["education", "government"],
++    built: true,
++  },
++  {
++    id: "multilingual",
++    label: "Multilingual (Bhashini)",
++    description: "In-place translation for regional languages.",
++    sectorTags: ["government", "ngo"],
++    built: true,
++  },
++  {
++    id: "grievances",
++    label: "Grievance Redressal",
++    description: "Track complaints from filing to resolution.",
++    sectorTags: ["government", "ngo"],
++    built: false,
++  },
++  {
++    id: "town_halls",
++    label: "Town Halls",
++    description: "Scheduled deliberation sessions over Webex.",
++    sectorTags: ["education", "government"],
++    built: false,
++  },
++  {
++    id: "petitions",
++    label: "Petitions",
++    description: "Threshold-based petitions that escalate automatically.",
++    sectorTags: ["education", "government", "ngo"],
++    built: false,
++  },
++  {
++    id: "polls",
++    label: "Quick Polls",
++    description: "Lightweight sentiment checks.",
++    sectorTags: ["education", "government", "ngo"],
++    built: false,
++  },
++  {
++    id: "elections",
++    label: "Elections",
++    description: "Slate-based representative elections.",
++    sectorTags: ["education", "government"],
++    built: false,
++  },
++  {
++    id: "committees",
++    label: "Committees",
++    description: "Standing committees with delegated authority.",
++    sectorTags: ["education", "government", "ngo"],
++    built: false,
++  },
++  {
++    id: "transparency",
++    label: "Transparency Ledger",
++    description: "Public audit log of every civic action.",
++    sectorTags: ["government", "ngo"],
++    built: false,
++  },
++  {
++    id: "notices",
++    label: "Notice Board",
++    description: "Official announcements and gazettes.",
++    sectorTags: ["education", "government"],
++    built: false,
++  },
++  {
++    id: "volunteering",
++    label: "Volunteering",
++    description: "Match members to on-ground tasks.",
++    sectorTags: ["ngo"],
++    built: false,
++  },
++  {
++    id: "donations",
++    label: "Donations",
++    description: "Collect and account for contributions.",
++    sectorTags: ["ngo"],
++    built: false,
++  },
++  {
++    id: "surveys",
++    label: "Surveys",
++    description: "Long-form structured feedback.",
++    sectorTags: ["education", "government", "ngo"],
++    built: false,
++  },
++  {
++    id: "analytics",
++    label: "Analytics",
++    description: "Participation and engagement dashboards.",
++    sectorTags: ["education", "government", "ngo"],
++    built: false,
++  },
++];
++
++export const MODULE_BY_ID: Record<string, FeatureModule> = Object.fromEntries(
++  MODULES.map((m) => [m.id, m]),
++);
++
++export const SECTORS: { id: Sector; label: string }[] = [
++  { id: "education", label: "Education" },
++  { id: "government", label: "Government" },
++  { id: "ngo", label: "NGO" },
++];
+diff --git a/cin/config/pipeline.ts b/cin/config/pipeline.ts
+new file mode 100644
+index 0000000..d51bd0f
+--- /dev/null
++++ b/cin/config/pipeline.ts
+@@ -0,0 +1,46 @@
++/**
++ * Every proposal moves through CIN's 4-stage trust pipeline. The stage is
++ * part of the proposal record; the detail view renders it as an OS status strip
++ * and the feed shows it as a compact chip.
++ */
++export type StageId = "notice" | "trust" | "trigger" | "verification";
++
++export interface PipelineStage {
++  id: StageId;
++  label: string;
++  blurb: string;
++}
++
++export const PIPELINE: PipelineStage[] = [
++  {
++    id: "notice",
++    label: "Notice & Input",
++    blurb: "Raised and open for the community to weigh in.",
++  },
++  {
++    id: "trust",
++    label: "Trust Filter",
++    blurb: "Verified members endorse; duplicates and noise are filtered.",
++  },
++  {
++    id: "trigger",
++    label: "Trigger to Action",
++    blurb: "Threshold met — routed to the body that can act.",
++  },
++  {
++    id: "verification",
++    label: "Verification",
++    blurb: "Outcome recorded and verified on the transparency ledger.",
++  },
++];
++
++export const STAGE_INDEX: Record<StageId, number> = {
++  notice: 0,
++  trust: 1,
++  trigger: 2,
++  verification: 3,
++};
++
++export const STAGE_BY_ID: Record<StageId, PipelineStage> = Object.fromEntries(
++  PIPELINE.map((s) => [s.id, s]),
++) as Record<StageId, PipelineStage>;
+diff --git a/cin/config/tenants.ts b/cin/config/tenants.ts
+new file mode 100644
+index 0000000..b763e58
+--- /dev/null
++++ b/cin/config/tenants.ts
+@@ -0,0 +1,75 @@
++import type { Sector } from "./modules";
++
++/**
++ * A tenant is a config row. Everything about how CIN looks and which
++ * modules exist for a client is derived from this object at runtime.
++ * The provisioner writes new tenants of exactly this shape into the store.
++ */
++export interface TenantBranding {
++  logoText: string;
++  /** owned tenant color; drives --primary at runtime */
++  primaryColor: string;
++  primaryStrong: string;
++  primarySoft: string;
++  primaryForeground: string;
++  /** owned tenant accent; drives --accent at runtime */
++  accentColor: string;
++  accentSoft: string;
++  accentForeground: string;
++}
++
++export interface Tenant {
++  id: string;
++  name: string;
++  /** short kicker shown in the login + system bar, e.g. "College Union" */
++  kind: string;
++  sector: Sector;
++  /** constituency label — what a "group" means for this tenant */
++  constituencyLabel: string;
++  branding: TenantBranding;
++  /** enabled module ids — the feature resolver gates on this */
++  features: string[];
++  /** whether a Bhashini-style language toggle is offered */
++  seed: boolean;
++}
++
++export const SEED_TENANTS: Tenant[] = [
++  {
++    id: "xaviers",
++    name: "St. Xavier's College",
++    kind: "Students' Union",
++    sector: "education",
++    constituencyLabel: "Department",
++    branding: {
++      logoText: "SX",
++      primaryColor: "#2f4bd8",
++      primaryStrong: "#2338b0",
++      primarySoft: "#eaeeff",
++      primaryForeground: "#ffffff",
++      accentColor: "#d99b1c",
++      accentSoft: "#fdf3dc",
++      accentForeground: "#2a2109",
++    },
++    features: ["proposals", "voting", "tally", "participatory_budgeting"],
++    seed: true,
++  },
++  {
++    id: "devgaon",
++    name: "Devgaon Panchayat",
++    kind: "Gram Sabha",
++    sector: "government",
++    constituencyLabel: "Ward",
++    branding: {
++      logoText: "दे",
++      primaryColor: "#177a4a",
++      primaryStrong: "#0f5e39",
++      primarySoft: "#e3f5ea",
++      primaryForeground: "#ffffff",
++      accentColor: "#c85a2b",
++      accentSoft: "#fbe9df",
++      accentForeground: "#2c130a",
++    },
++    features: ["proposals", "voting", "tally", "multilingual"],
++    seed: true,
++  },
++];
+diff --git a/cin/context/AdminSessionContext.tsx b/cin/context/AdminSessionContext.tsx
+new file mode 100644
+index 0000000..aad1386
+--- /dev/null
++++ b/cin/context/AdminSessionContext.tsx
+@@ -0,0 +1,59 @@
++import {
++  createContext,
++  useCallback,
++  useContext,
++  useMemo,
++  useState,
++  type ReactNode,
++} from "react";
++import { getAdminSession, setAdminSession } from "@/lib/store";
++
++interface AdminSessionContextValue {
++  isAdminAuthed: boolean;
++  loginAsAdmin: () => void;
++  logoutAdmin: () => void;
++}
++
++const AdminSessionContext = createContext<AdminSessionContextValue | null>(
++  null,
++);
++
++/**
++ * Platform-admin auth, separate from the per-tenant member session in
++ * SessionContext. There's only one admin persona in this demo — no tenant
++ * scoping, no user picker — it just gates the /admin console.
++ */
++export function AdminSessionProvider({ children }: { children: ReactNode }) {
++  const [isAdminAuthed, setIsAdminAuthed] = useState(() => getAdminSession());
++
++  const loginAsAdmin = useCallback(() => {
++    setAdminSession(true);
++    setIsAdminAuthed(true);
++  }, []);
++
++  const logoutAdmin = useCallback(() => {
++    setAdminSession(false);
++    setIsAdminAuthed(false);
++  }, []);
++
++  const value = useMemo(
++    () => ({ isAdminAuthed, loginAsAdmin, logoutAdmin }),
++    [isAdminAuthed, loginAsAdmin, logoutAdmin],
++  );
++
++  return (
++    <AdminSessionContext.Provider value={value}>
++      {children}
++    </AdminSessionContext.Provider>
++  );
++}
++
++// eslint-disable-next-line react-refresh/only-export-components
++export function useAdminSession() {
++  const ctx = useContext(AdminSessionContext);
++  if (!ctx)
++    throw new Error(
++      "useAdminSession must be used within an AdminSessionProvider",
++    );
++  return ctx;
++}
+diff --git a/cin/lib/api.ts b/cin/lib/api.ts
+new file mode 100644
+index 0000000..ea845fe
+--- /dev/null
++++ b/cin/lib/api.ts
+@@ -0,0 +1,371 @@
++import { delay, slugify } from "@/lib/utils";
++import type { Tenant } from "@/config/tenants";
++import type { Sector } from "@/config/modules";
++import {
++  SEED_PROPOSALS,
++  seedTotal,
++  type Proposal,
++} from "@/api/mock/proposals";
++import { SEED_USERS, type User } from "@/api/mock/users";
++import {
++  addProvisionedProposals,
++  addProvisionedUsers,
++  addTenant,
++  getProvisionedProposals,
++  getProvisionedUsers,
++  getSession,
++  getTenants,
++  getVotes,
++  hasVoted,
++  recordVote,
++  setSession,
++  type Session,
++} from "@/lib/store";
++import { initials } from "@/lib/utils";
++
++/**
++ * The ONLY seam between the UI and its data. Everything returns a Promise so a
++ * real Supabase/Flask client can replace these bodies without the screens
++ * changing. Reads come from the seed modules; writes go through the localStorage
++ * store. Every query is scoped by tenantId — mirroring row-level tenant
++ * isolation on a real backend.
++ */
++
++/** A proposal with vote counts merged in (seed baseline + cast votes). */
++export interface ProposalView extends Proposal {
++  votes: number;
++  votesByConstituency: Record<string, number>;
++  votedByCurrentUser: boolean;
++}
++
++function allUsers(): User[] {
++  return [...SEED_USERS, ...getProvisionedUsers()];
++}
++
++function allProposals(): Proposal[] {
++  return [...SEED_PROPOSALS, ...getProvisionedProposals()];
++}
++
++function userById(id: string): User | undefined {
++  return allUsers().find((u) => u.id === id);
++}
++
++function enrich(p: Proposal, currentUserId?: string): ProposalView {
++  const recorded = getVotes()[p.tenantId]?.[p.id] ?? [];
++  const votesByConstituency: Record<string, number> = {
++    ...p.seedVotesByConstituency,
++  };
++  for (const uid of recorded) {
++    const c = userById(uid)?.constituency ?? "Other";
++    votesByConstituency[c] = (votesByConstituency[c] ?? 0) + 1;
++  }
++  return {
++    ...p,
++    votes: seedTotal(p) + recorded.length,
++    votesByConstituency,
++    votedByCurrentUser: currentUserId
++      ? recorded.includes(currentUserId)
++      : false,
++  };
++}
++
++/* -------------------------------- auth ----------------------------- */
++
++export const auth = {
++  usersForTenant(tenantId: string): Promise<User[]> {
++    return delay(allUsers().filter((u) => u.tenantId === tenantId));
++  },
++  currentSession(): Promise<Session | null> {
++    return delay(getSession(), 0);
++  },
++  currentUser(): Promise<User | null> {
++    const s = getSession();
++    return delay(s ? (userById(s.userId) ?? null) : null, 0);
++  },
++  login(tenantId: string, userId: string): Promise<Session> {
++    const session = { tenantId, userId };
++    setSession(session);
++    return delay(session, 400);
++  },
++  logout(): Promise<void> {
++    setSession(null);
++    return delay(undefined, 0);
++  },
++  /**
++   * Client self-signup: creates a brand-new tenant-scoped member account.
++   * Mirrors `seedNewTenant` below — writes through the same provisioned-users
++   * seam, so the new account behaves exactly like a demo account afterwards
++   * (SessionContext.login still does the actual session write).
++   */
++  signup(
++    tenantId: string,
++    input: { name: string; role: string; constituency: string },
++  ): Promise<User> {
++    const user: User = {
++      id: `signup-${tenantId}-${Date.now().toString(36)}`,
++      tenantId,
++      name: input.name,
++      role: input.role || "Member",
++      constituency: input.constituency || "General",
++      avatarInitials: initials(input.name),
++    };
++    addProvisionedUsers([user]);
++    return delay(user, 500);
++  },
++};
++
++/* ------------------------------ tenants ---------------------------- */
++
++export interface CreateTenantInput {
++  name: string;
++  kind: string;
++  sector: Sector;
++  constituencyLabel: string;
++  primaryColor: string;
++  accentColor: string;
++  features: string[];
++}
++
++export const tenants = {
++  list(): Promise<Tenant[]> {
++    return delay(getTenants());
++  },
++  create(input: CreateTenantInput): Promise<Tenant> {
++    const id = uniqueTenantId(input.name);
++    const tenant: Tenant = {
++      id,
++      name: input.name,
++      kind: input.kind || "Assembly",
++      sector: input.sector,
++      constituencyLabel: input.constituencyLabel || "Group",
++      branding: {
++        logoText: deriveMark(input.name),
++        primaryColor: input.primaryColor,
++        primaryStrong: shade(input.primaryColor, -0.14),
++        primarySoft: tint(input.primaryColor, 0.88),
++        primaryForeground: "#ffffff",
++        accentColor: input.accentColor,
++        accentSoft: tint(input.accentColor, 0.85),
++        accentForeground: "#241405",
++      },
++      features: input.features,
++      seed: false,
++    };
++    addTenant(tenant);
++    seedNewTenant(tenant);
++    return delay(tenant, 500);
++  },
++};
++
++/**
++ * Give a freshly provisioned tenant just enough content to be walkable: three
++ * demo accounts across three constituencies and two starter proposals. This is
++ * what makes "Create" land — you can immediately log in and vote.
++ */
++function seedNewTenant(t: Tenant): void {
++  const label = t.constituencyLabel;
++  const groups = [`${label} 1`, `${label} 2`, `${label} 3`];
++  const roles =
++    t.sector === "government"
++      ? ["Chairperson", "Member", "Resident"]
++      : t.sector === "ngo"
++        ? ["Coordinator", "Volunteer", "Member"]
++        : ["President", "Representative", "Member"];
++  const names = ["Asha Kumar", "Vikram Shah", "Neha Gupta"];
++
++  const users: User[] = names.map((name, i) => ({
++    id: `${t.id}-u${i + 1}`,
++    tenantId: t.id,
++    name,
++    role: roles[i],
++    constituency: groups[i],
++    avatarInitials: initials(name),
++  }));
++  addProvisionedUsers(users);
++
++  const canBudget = t.features.includes("participatory_budgeting");
++  const starters: Proposal[] = [
++    {
++      id: `${t.id}-p1`,
++      tenantId: t.id,
++      title: "Publish a monthly open agenda before every meeting",
++      summary:
++        "Share the agenda and supporting documents a week ahead so members can prepare.",
++      body: "Decisions land better when everyone has read the same material. Publishing the agenda and documents a week before each meeting gives members time to consult their constituency and come ready to decide.",
++      authorId: users[0].id,
++      authorName: users[0].name,
++      constituency: groups[0],
++      stage: "notice",
++      createdAt: t.seed ? "2026-07-01" : "2026-07-08",
++      seedVotesByConstituency: { [groups[0]]: 12, [groups[1]]: 7, [groups[2]]: 9 },
++      budgetAsk: canBudget ? 40000 : undefined,
++      tags: ["transparency"],
++    },
++    {
++      id: `${t.id}-p2`,
++      tenantId: t.id,
++      title: "Set up a shared noticeboard for community requests",
++      summary: "One place to raise, track, and close everyday requests.",
++      body: "Right now requests scatter across messages and calls. A single shared noticeboard where anyone can raise an item and watch it move to resolution would cut the follow-up churn.",
++      authorId: users[1].id,
++      authorName: users[1].name,
++      constituency: groups[1],
++      stage: "trust",
++      createdAt: t.seed ? "2026-07-02" : "2026-07-09",
++      seedVotesByConstituency: { [groups[0]]: 5, [groups[1]]: 14, [groups[2]]: 6 },
++      budgetAsk: canBudget ? 25000 : undefined,
++      tags: ["community"],
++    },
++  ];
++  addProvisionedProposals(starters);
++}
++
++function uniqueTenantId(name: string): string {
++  const base = slugify(name) || "tenant";
++  const existing = new Set(getTenants().map((t) => t.id));
++  if (!existing.has(base)) return base;
++  let i = 2;
++  while (existing.has(`${base}-${i}`)) i++;
++  return `${base}-${i}`;
++}
++
++function deriveMark(name: string): string {
++  const words = name.trim().split(/\s+/);
++  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
++  return (words[0][0] + words[1][0]).toUpperCase();
++}
++
++/* ------------------------------ proposals -------------------------- */
++
++export const proposals = {
++  list(tenantId: string, currentUserId?: string): Promise<ProposalView[]> {
++    const list = allProposals()
++      .filter((p) => p.tenantId === tenantId)
++      .map((p) => enrich(p, currentUserId));
++    return delay(list);
++  },
++  get(
++    tenantId: string,
++    id: string,
++    currentUserId?: string,
++  ): Promise<ProposalView | null> {
++    const p = allProposals().find(
++      (x) => x.tenantId === tenantId && x.id === id,
++    );
++    return delay(p ? enrich(p, currentUserId) : null);
++  },
++};
++
++/* -------------------------------- votes ---------------------------- */
++
++export class AlreadyVotedError extends Error {
++  constructor() {
++    super("You have already voted on this proposal.");
++    this.name = "AlreadyVotedError";
++  }
++}
++
++export const votes = {
++  hasVoted(tenantId: string, proposalId: string, userId: string): boolean {
++    return hasVoted(tenantId, proposalId, userId);
++  },
++  /** Mirrors the DB UNIQUE(proposal_id, user_id) — one vote per user. */
++  cast(
++    tenantId: string,
++    proposalId: string,
++    userId: string,
++  ): Promise<ProposalView> {
++    if (hasVoted(tenantId, proposalId, userId)) {
++      return Promise.reject(new AlreadyVotedError());
++    }
++    recordVote(tenantId, proposalId, userId);
++    const p = allProposals().find(
++      (x) => x.tenantId === tenantId && x.id === proposalId,
++    )!;
++    return delay(enrich(p, userId), 300);
++  },
++};
++
++/* -------------------------------- tally ---------------------------- */
++
++export interface TallyGroup {
++  constituency: string;
++  votes: number;
++}
++
++export interface TallyData {
++  constituencyLabel: string;
++  totalVotes: number;
++  totalProposals: number;
++  groups: TallyGroup[];
++  /** proposals sorted by vote count, enriched */
++  ranked: ProposalView[];
++}
++
++export const tally = {
++  get(tenant: Tenant, currentUserId?: string): Promise<TallyData> {
++    const list = allProposals()
++      .filter((p) => p.tenantId === tenant.id)
++      .map((p) => enrich(p, currentUserId));
++    const groupTotals: Record<string, number> = {};
++    for (const p of list) {
++      for (const [c, n] of Object.entries(p.votesByConstituency)) {
++        groupTotals[c] = (groupTotals[c] ?? 0) + n;
++      }
++    }
++    const groups = Object.entries(groupTotals)
++      .map(([constituency, votes]) => ({ constituency, votes }))
++      .sort((a, b) => b.votes - a.votes);
++    const ranked = [...list].sort((a, b) => b.votes - a.votes);
++    return delay(
++      {
++        constituencyLabel: tenant.constituencyLabel,
++        totalVotes: list.reduce((sum, p) => sum + p.votes, 0),
++        totalProposals: list.length,
++        groups,
++        ranked,
++      },
++      120,
++    );
++  },
++};
++
++/* --------------------------- color helpers ------------------------- */
++// tiny hex mixers so a provisioned tenant gets a full ramp from one color
++
++function clamp(n: number) {
++  return Math.max(0, Math.min(255, Math.round(n)));
++}
++function parse(hex: string): [number, number, number] {
++  const h = hex.replace("#", "");
++  const v =
++    h.length === 3
++      ? h
++          .split("")
++          .map((c) => c + c)
++          .join("")
++      : h;
++  return [
++    parseInt(v.slice(0, 2), 16),
++    parseInt(v.slice(2, 4), 16),
++    parseInt(v.slice(4, 6), 16),
++  ];
++}
++function toHex([r, g, b]: [number, number, number]) {
++  return "#" + [r, g, b].map((n) => clamp(n).toString(16).padStart(2, "0")).join("");
++}
++/** darken (amount < 0) toward black */
++function shade(hex: string, amount: number): string {
++  const [r, g, b] = parse(hex);
++  const f = 1 + amount;
++  return toHex([r * f, g * f, b * f]);
++}
++/** mix toward white by `amount` (0..1) for a soft tint */
++function tint(hex: string, amount: number): string {
++  const [r, g, b] = parse(hex);
++  return toHex([
++    r + (255 - r) * amount,
++    g + (255 - g) * amount,
++    b + (255 - b) * amount,
++  ]);
++}
+diff --git a/cin/lib/store.ts b/cin/lib/store.ts
+new file mode 100644
+index 0000000..cde88f8
+--- /dev/null
++++ b/cin/lib/store.ts
+@@ -0,0 +1,133 @@
++import { SEED_TENANTS, type Tenant } from "@/config/tenants";
++import type { User } from "@/api/mock/users";
++import type { Proposal } from "@/api/mock/proposals";
++
++/**
++ * The single source of truth for mutable demo state, backed by localStorage
++ * so provisioned tenants and cast votes survive a refresh. Everything the
++ * mock api layer persists flows through here; when a real backend lands, this
++ * file is the only thing that gets swapped for network calls.
++ */
++
++const KEYS = {
++  tenants: "cin.tenants.v1", // provisioned tenants (seed tenants are code)
++  users: "cin.users.v1", // demo users seeded for provisioned tenants
++  proposals: "cin.proposals.v1", // starter proposals for provisioned tenants
++  votes: "cin.votes.v1", // { [tenantId]: { [proposalId]: userId[] } }
++  session: "cin.session.v1", // { tenantId, userId } | null
++  currentTenant: "cin.currentTenant.v1",
++  adminSession: "cin.adminSession.v1",
++};
++
++function read<T>(key: string, fallback: T): T {
++  try {
++    const raw = localStorage.getItem(key);
++    return raw ? (JSON.parse(raw) as T) : fallback;
++  } catch {
++    return fallback;
++  }
++}
++
++function write<T>(key: string, value: T) {
++  try {
++    localStorage.setItem(key, JSON.stringify(value));
++  } catch {
++    /* demo: ignore quota / private-mode errors */
++  }
++}
++
++/* ----------------------------- tenants ----------------------------- */
++
++export function getTenants(): Tenant[] {
++  const provisioned = read<Tenant[]>(KEYS.tenants, []);
++  // provisioned tenants can override seeds by id (rare), but keep order stable
++  const seedIds = new Set(SEED_TENANTS.map((t) => t.id));
++  const extras = provisioned.filter((t) => !seedIds.has(t.id));
++  return [...SEED_TENANTS, ...extras];
++}
++
++export function addTenant(tenant: Tenant): Tenant {
++  const provisioned = read<Tenant[]>(KEYS.tenants, []);
++  provisioned.push(tenant);
++  write(KEYS.tenants, provisioned);
++  return tenant;
++}
++
++/* ----------------- provisioned users & proposals ------------------- */
++// New tenants ship with a little seed content so they're walkable the moment
++// they're created — the api merges these with the code-defined seed data.
++
++export function getProvisionedUsers(): User[] {
++  return read<User[]>(KEYS.users, []);
++}
++
++export function addProvisionedUsers(users: User[]) {
++  write(KEYS.users, [...getProvisionedUsers(), ...users]);
++}
++
++export function getProvisionedProposals(): Proposal[] {
++  return read<Proposal[]>(KEYS.proposals, []);
++}
++
++export function addProvisionedProposals(items: Proposal[]) {
++  write(KEYS.proposals, [...getProvisionedProposals(), ...items]);
++}
++
++/* --------------------------- current tenant ------------------------ */
++
++export function getCurrentTenantId(): string {
++  return read<string>(KEYS.currentTenant, SEED_TENANTS[0].id);
++}
++
++export function setCurrentTenantId(id: string) {
++  write(KEYS.currentTenant, id);
++}
++
++/* ------------------------------ votes ------------------------------ */
++
++type VoteMap = Record<string, Record<string, string[]>>;
++
++export function getVotes(): VoteMap {
++  return read<VoteMap>(KEYS.votes, {});
++}
++
++export function recordVote(tenantId: string, proposalId: string, userId: string) {
++  const votes = getVotes();
++  votes[tenantId] ??= {};
++  votes[tenantId][proposalId] ??= [];
++  if (!votes[tenantId][proposalId].includes(userId)) {
++    votes[tenantId][proposalId].push(userId);
++  }
++  write(KEYS.votes, votes);
++}
++
++export function hasVoted(tenantId: string, proposalId: string, userId: string) {
++  return getVotes()[tenantId]?.[proposalId]?.includes(userId) ?? false;
++}
++
++/* ----------------------------- session ----------------------------- */
++
++export interface Session {
++  tenantId: string;
++  userId: string;
++}
++
++export function getSession(): Session | null {
++  return read<Session | null>(KEYS.session, null);
++}
++
++export function setSession(session: Session | null) {
++  write(KEYS.session, session);
++}
++
++export function getAdminSession(): boolean {
++  return read<boolean>(KEYS.adminSession, false);
++}
++
++export function setAdminSession(value: boolean) {
++  write(KEYS.adminSession, value);
++}
++
++export function resetDemo() {
++  Object.values(KEYS).forEach((k) => localStorage.removeItem(k));
++}
+diff --git a/cin/lib/utils.ts b/cin/lib/utils.ts
+index 41c061a..13bcb66 100644
+--- a/cin/lib/utils.ts
++++ b/cin/lib/utils.ts
+@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
+   return twMerge(clsx(inputs));
+ }
+ 
++/** Deterministic little delay so mock api calls feel like network. */
++export function delay<T>(value: T, ms = 260): Promise<T> {
++  return new Promise((resolve) => setTimeout(() => resolve(value), ms));
++}
++
+ export function initials(name: string) {
+   return name
+     .split(/\s+/)

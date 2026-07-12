@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Activity, Crown } from "lucide-react";
 import { useLang } from "@/context/LanguageContext";
-import type { TallyData } from "@/lib/data";
+import { tally, type TallyData } from "@/lib/data";
 import { StageChip } from "@/components/pipeline";
 import { cn } from "@/lib/utils";
 import type { Tenant } from "@/lib/tenant";
@@ -46,19 +46,8 @@ export function TallyView({ tenant }: { tenant: Tenant }) {
 
   useEffect(() => {
     let active = true;
-    const load = () =>
-      fetch(`/api/t/${tenant.slug}/tally`)
-        .then((r) => r.json())
-        .then((d) => active && setData(d));
-    load();
-    // No Supabase Realtime wiring yet (that needs its own client + project
-    // credentials, which we don't invent) — short polling gets the same
-    // "moves without a refresh" feel for the Webex vote loop today.
-    const interval = setInterval(load, 4000);
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
+    tally.get(tenant).then((d) => active && setData(d));
+    return () => { active = false; };
   }, [tenant]);
 
   const total = useCountUp(data?.totalVotes ?? 0);

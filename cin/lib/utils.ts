@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Deterministic little delay so mock api calls feel like network. */
+export function delay<T>(value: T, ms = 260): Promise<T> {
+  return new Promise((resolve) => setTimeout(() => resolve(value), ms));
+}
+
 export function initials(name: string) {
   return name
     .split(/\s+/)

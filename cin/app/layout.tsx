@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AdminSessionProvider } from "@/context/AdminSessionContext";
 
 export const metadata: Metadata = {
   title: "CIN — Civic Intelligence Network",
@@ -26,7 +27,11 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <AdminSessionProvider>
+          {children}
+        </AdminSessionProvider>
+      </body>
     </html>
   );
 }
